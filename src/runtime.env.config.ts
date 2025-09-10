@@ -3,7 +3,12 @@
  */
 export type RuntimeEnvConfig = {
   /**
-   * This is the name of the object attached to the `window` instance
+   * This is the object name is going to be attached to
+   * @default window
+   */
+  global?: (() => string) | string;
+  /**
+   * This is the name of the object attached to the `global` instance
    * @default env
    */
   name?: (() => string) | string;

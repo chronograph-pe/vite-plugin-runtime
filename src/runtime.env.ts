@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import prettier from 'prettier';
 import type { RuntimeEnvConfig } from './runtime.env.config.js';
-import { getGeneratedTypesPath, getName, getType, isViteEnv } from './helpers.js';
+import { getGeneratedTypesPath, getGlobal, getName, getType, isViteEnv } from './helpers.js';
 
 /**
  * Runtime environment plugin for vite
@@ -73,7 +73,7 @@ export const runtimeEnv = (options: RuntimeEnvConfig = { injectHtml: true }): Pl
       }
     },
     transform(code) {
-      const globalObject = 'window';
+      const globalObject = getGlobal(runtimeEnvConfig);
       const globalName = getName(runtimeEnvConfig);
 
       const importMetaRegex = new RegExp(`(import\\.meta\\.${globalName})(.+)`, 'g');
@@ -103,7 +103,7 @@ export const runtimeEnv = (options: RuntimeEnvConfig = { injectHtml: true }): Pl
         return;
       }
 
-      const globalObject = 'window';
+      const globalObject = getGlobal(runtimeEnvConfig);
       const globalName = getName(runtimeEnvConfig);
 
       let script: string | undefined;
