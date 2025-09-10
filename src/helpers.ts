@@ -1,5 +1,15 @@
 import { RuntimeEnvConfig } from './runtime.env.config.js';
 
+export const getGlobal = (config: RuntimeEnvConfig): string => {
+  if (!config.global) {
+    return 'process';
+  }
+  if (typeof config.global === 'string') {
+    return config.global;
+  }
+  return config.global();
+};
+
 export const getName = (config: RuntimeEnvConfig): string => {
   if (!config.name) {
     return 'env';

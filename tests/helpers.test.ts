@@ -1,4 +1,18 @@
-import { getGeneratedTypesPath, getName, getType, isBoolean, isNumber, isViteEnv } from '../src/helpers.js';
+import { getGeneratedTypesPath, getGlobal, getName, getType, isBoolean, isNumber, isViteEnv } from '../src/helpers.js';
+
+describe('getGlobal', () => {
+  test('returns name when string', () => {
+    expect(getGlobal({ global: 'test' })).toBe('test');
+  });
+
+  test('returns name when function', () => {
+    expect(getGlobal({ global: () => 'test' })).toBe('test');
+  });
+
+  test('returns env by default', () => {
+    expect(getGlobal({})).toBe('process');
+  });
+});
 
 describe('getName', () => {
   test('returns name when string', () => {

@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import prettier from 'prettier';
 import type { RuntimeEnvConfig } from './runtime.env.config.js';
-import { getGeneratedTypesPath, getName, getType, isViteEnv } from './helpers.js';
+import { getGeneratedTypesPath, getGlobal, getName, getType, isViteEnv } from './helpers.js';
 
 /**
  * Runtime environment plugin for vite
@@ -14,8 +14,6 @@ export const runtimeEnv = (options: RuntimeEnvConfig = { injectHtml: true }): Pl
   let vite_config: ResolvedConfig;
   let runtimeEnvConfig: RuntimeEnvConfig;
   let vite_env_prefix: string[];
-
-  const regexIdentifierName = /(?:[$_\p{ID_Start}])(?:[$\u200C\u200D\p{ID_Continue}])*/u;
 
   return {
     name: 'vite-plugin-runtime-env',
@@ -72,46 +70,20 @@ export const runtimeEnv = (options: RuntimeEnvConfig = { injectHtml: true }): Pl
           .then(output => fs.writeFileSync(typePath, output));
       }
     },
-    transform(code) {
-      const globalObject = 'window';
-      const globalName = getName(runtimeEnvConfig);
-
-      const importMetaRegex = new RegExp(`(import\\.meta\\.${globalName})(.+)`, 'g');
-      for (let match = importMetaRegex.exec(code); match !== null; match = importMetaRegex.exec(code)) {
-        const identifierMatch = regexIdentifierName.exec(match[2]);
-
-        if (identifierMatch === null) {
-          continue;
-        }
-
-        const name = identifierMatch[0];
-
-        if (isViteEnv(name, vite_env_prefix)) {
-          continue;
-        }
-
-        const start = match.index;
-        const end = start + match[1].length;
-
-        code = code.slice(0, start) + `${globalObject}.${globalName}` + code.slice(end);
-      }
-
-      return code;
-    },
     transformIndexHtml() {
       if (runtimeEnvConfig.injectHtml !== true) {
         return;
       }
 
-      const globalObject = 'window';
+      const globalObject = getGlobal(runtimeEnvConfig);
       const globalName = getName(runtimeEnvConfig);
 
       let script: string | undefined;
 
       if (vite_config.command === 'serve') {
-        script = `${globalObject}.${globalName} = {...${globalObject}.${globalName}, ...${JSON.stringify(envObj)}};`;
+        script = `if(globalThis.${globalObject} === undefined) globalThis.${globalObject} = {}; ${globalObject}.${globalName} = {...${globalObject}.${globalName}, ...${JSON.stringify(envObj)}};`;
       } else {
-        script = `import rtenv from '/${globalName}.js'; ${globalObject}.${globalName} = {...${globalObject}.${globalName}, ...rtenv};`;
+        script = `if(globalThis.${globalObject} === undefined) globalThis.${globalObject} = {}; import rtenv from '/${globalName}.js'; ${globalObject}.${globalName} = {...${globalObject}.${globalName}, ...rtenv};`;
       }
 
       return [
@@ -141,11 +113,12 @@ export const runtimeEnv = (options: RuntimeEnvConfig = { injectHtml: true }): Pl
 
       const output = `export default ${JSON.stringify(jsonObj)} ;`;
 
-      this.emitFile({
-        type: 'asset',
-        fileName: `${globalName}.js`,
-        source: output,
-      });
+      if (runtimeEnvConfig.generateFile === true)
+        this.emitFile({
+          type: 'asset',
+          fileName: `${globalName}.js`,
+          source: output,
+        });
 
       if (runtimeEnvConfig.envsubstTemplate === true) {
         const envsubstTemplateOutput = `export default ${JSON.stringify(envsubstTemplateObj)} ;`;

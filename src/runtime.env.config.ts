@@ -3,7 +3,12 @@
  */
 export type RuntimeEnvConfig = {
   /**
-   * This is the name of the object attached to the `window` instance
+   * This is the object name is going to be attached to
+   * @default window
+   */
+  global?: (() => string) | string;
+  /**
+   * This is the name of the object attached to the `global` instance
    * @default env
    */
   name?: (() => string) | string;
@@ -12,6 +17,11 @@ export type RuntimeEnvConfig = {
    * @default false
    */
   generateTypes?: boolean;
+  /**
+   * Specificies whether to emit env.js file
+   * @default false
+   */
+  generateFile?: boolean;
   /**
    * The path to generate typescript types. Only takes affect if @see {@link generateTypes} is `true`
    * @default process.cwd()

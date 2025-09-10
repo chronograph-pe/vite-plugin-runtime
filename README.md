@@ -226,3 +226,9 @@ runtimeHtml({
   ]
 }),
 ```
+
+# Build Notes
+```
+yarn
+yarn build
+```
